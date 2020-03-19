@@ -14,16 +14,18 @@ class LifetimeEstimator:
     sigma_days_alive = 25
     p_tagged = .75
 
-    def __init__(self, min_doy=201, max_doy=263, pad_days_after=40):
+    def __init__(self, min_doy=201, max_doy=263, pad_days_after=40, use_tagged_date=True):
         self.min_doy = min_doy
         self.max_doy = max_doy + pad_days_after
 
         all_doys = np.arange(self.min_doy, self.max_doy).astype(np.float)
         self.all_doys = pd.DataFrame(all_doys, columns=['doy'])
 
-        self.meta = BeeMetaInfo()
+        self.use_tagged_date = use_tagged_date
+        if use_tagged_date:
+            self.meta = BeeMetaInfo()
 
-    def fit(self, bee_id, bee_detections, num_tune=1000, num_draws=1000):
+    def fit(self, bee_id, bee_detections, num_tune=1000, num_draws=1000, progress=False):
         bee_detections = bee_detections.merge(self.all_doys, how='outer')
 
         bee_detections.fillna(0, inplace=True)
@@ -36,21 +38,25 @@ class LifetimeEstimator:
         days = np.array(list(range(num_detections.shape[0]))).astype(np.float64)
         num_detections = num_detections.astype(np.float32)
 
-        hatchdate = self.meta.get_hatchdate(BeesbookID.from_ferwar(bee_id))
-        tagged_doy = (hatchdate - datetime.datetime(hatchdate.year, 1, 1)).days
-        tagged_day = np.clip(tagged_doy - self.min_doy, 0, np.inf)
-        tagged_day_unclipped = (tagged_doy - self.min_doy)
-        num_days_clipped = np.abs(tagged_day - tagged_day_unclipped)
-        
-        if np.isnan(tagged_day):
-            return None
+        if self.use_tagged_date:
+            hatchdate = self.meta.get_hatchdate(BeesbookID.from_ferwar(bee_id))
+            tagged_doy = (hatchdate - datetime.datetime(hatchdate.year, 1, 1)).days
+            tagged_day = np.clip(tagged_doy - self.min_doy, 0, np.inf)
+            tagged_day_unclipped = (tagged_doy - self.min_doy)
+            num_days_clipped = np.abs(tagged_day - tagged_day_unclipped)
+            
+            if np.isnan(tagged_day):
+                return None
+        else:
+            num_days_clipped = 0
         
         model = pm.Model()
         with model:
             p_emergence = np.ones(len(days)) 
             p_emergence /= p_emergence.sum()
-            p_emergence[int(tagged_day)] = self.p_tagged
-            p_emergence /= p_emergence.sum()
+            if self.use_tagged_date:
+                p_emergence[int(tagged_day)] = self.p_tagged
+                p_emergence /= p_emergence.sum()
 
             p_days_alive = scipy.stats.norm.pdf(
                 np.arange(0, len(days)), 
@@ -72,6 +78,6 @@ class LifetimeEstimator:
 
             num_detections_model = pm.Bernoulli('detections', rate, observed=num_detections > threshold)
 
-            trace = pm.sample(tune=num_tune, draws=num_draws)
+            trace = pm.sample(tune=num_tune, draws=num_draws, progressbar=progress)
 
-        return model, trace
+        return model, trace, num_detections
