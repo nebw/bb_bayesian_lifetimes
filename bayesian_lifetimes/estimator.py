@@ -13,6 +13,8 @@ class LifetimeEstimator:
     mu_days_alive = 21
     sigma_days_alive = 25
     p_tagged = .75
+    min_detections = np.expm1(8)
+    max_detections = np.expm1(12)
 
     def __init__(self, min_doy=201, max_doy=263, pad_days_after=40, use_tagged_date=True):
         self.min_doy = min_doy
@@ -33,7 +35,9 @@ class LifetimeEstimator:
         bee_detections.bee_id = bee_id
 
         num_detections = bee_detections['count'].values
-        num_detections = num_detections / np.max(num_detections)
+        num_detections -= self.min_detections
+        num_detections = np.clip(num_detections, 0, self.max_detections)
+        num_detections = num_detections / self.max_detections
 
         days = np.array(list(range(num_detections.shape[0]))).astype(np.float64)
         num_detections = num_detections.astype(np.float32)
