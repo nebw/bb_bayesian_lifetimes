@@ -41,8 +41,9 @@ class LifetimeEstimator:
         if self.use_tagged_date:
             hatchdate = self.meta.get_hatchdate(BeesbookID.from_ferwar(bee_id))
             tagged_doy = (hatchdate - datetime.datetime(hatchdate.year, 1, 1)).days
-            tagged_day = np.clip(tagged_doy - self.min_doy, 0, np.inf)
-            tagged_day_unclipped = (tagged_doy - self.min_doy)
+            tagged_dor = tagged_doy - self.min_doy + 1
+            tagged_day = np.clip(tagged_dor, 0, np.inf)
+            tagged_day_unclipped = tagged_dor
             num_days_clipped = np.abs(tagged_day - tagged_day_unclipped)
             
             if np.isnan(tagged_day):
