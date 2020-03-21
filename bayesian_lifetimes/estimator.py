@@ -13,14 +13,18 @@ class LifetimeEstimator:
     mu_days_alive = 21
     sigma_days_alive = 25
     p_tagged = .75
-    min_detections = np.expm1(8)
-    max_detections = np.expm1(12)
 
-    def __init__(self, min_doy=201, max_doy=263, pad_days_after=40, use_tagged_date=True):
+    def __init__(self, min_doy=201, max_doy=263, 
+                 pad_days_after=40, use_tagged_date=True,
+                 min_detections=np.expm1(8), max_detections=np.expm1(12),
+                 dead_rate_beta=25):
         self.min_doy = min_doy
         self.max_doy = max_doy + pad_days_after
         self.pad_days_after = pad_days_after
 
+        self.min_detections = min_detections
+        self.max_detections = max_detections
+        self.dead_rate_beta = dead_rate_beta
 
         all_doys = np.arange(self.min_doy, self.max_doy).astype(np.float)
         self.all_doys = pd.DataFrame(all_doys, columns=['doy'])
@@ -77,7 +81,7 @@ class LifetimeEstimator:
             switchpoint_died = pm.Deterministic(
                 'switchpoint_died', switchpoint_emerged + days_alive - num_days_clipped)
 
-            threshold = pm.Beta('dead_rate', alpha=1, beta=25)
+            threshold = pm.Beta('dead_rate', alpha=1, beta=self.dead_rate_beta)
             probability_higher = pm.Beta('probability_higher', alpha=5, beta=1)
             probability_lower = pm.Beta('probability_lower', alpha=1, beta=5)
 

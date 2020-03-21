@@ -5,7 +5,9 @@ import pandas as pd
 
 def get_data_for_bee(bee_id, bee_detections, 
                      min_doy, max_doy, use_tagged_date,
-                     num_tune=2000, num_draws=1000):
+                     num_tune=2000, num_draws=1000,
+                     min_detections=20, max_detections=3000,
+                     dead_rate_beta=50):
     import itertools
     import pandas as pd
     import numpy as np
@@ -20,7 +22,10 @@ def get_data_for_bee(bee_id, bee_detections,
         from bayesian_lifetimes.estimator import LifetimeEstimator
 
         estimator = LifetimeEstimator(min_doy=min_doy, max_doy=max_doy, 
-                                      use_tagged_date=use_tagged_date)
+                                      use_tagged_date=use_tagged_date,
+                                      min_detections=min_detections,
+                                      max_detections=max_detections,
+                                      dead_rate_beta=dead_rate_beta)
         _, trace, detections = estimator.fit(bee_id, bee_detections, 
                                              num_tune=num_tune, 
                                              num_draws=num_draws)
