@@ -19,6 +19,8 @@ class LifetimeEstimator:
     def __init__(self, min_doy=201, max_doy=263, pad_days_after=40, use_tagged_date=True):
         self.min_doy = min_doy
         self.max_doy = max_doy + pad_days_after
+        self.pad_days_after = pad_days_after
+
 
         all_doys = np.arange(self.min_doy, self.max_doy).astype(np.float)
         self.all_doys = pd.DataFrame(all_doys, columns=['doy'])
@@ -58,6 +60,7 @@ class LifetimeEstimator:
         model = pm.Model()
         with model:
             p_emergence = np.ones(len(days)) 
+            p_emergence[-self.pad_days_after:] = 0.
             p_emergence /= p_emergence.sum()
             if self.use_tagged_date:
                 p_emergence[int(tagged_day)] = self.p_tagged
