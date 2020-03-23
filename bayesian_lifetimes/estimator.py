@@ -17,7 +17,7 @@ class LifetimeEstimator:
     def __init__(self, min_doy=201, max_doy=263, 
                  pad_days_after=40, use_tagged_date=True,
                  min_detections=np.expm1(8), max_detections=np.expm1(12),
-                 dead_rate_beta=25):
+                 dead_rate_beta=25, p_hatchdates=None):
         self.min_doy = min_doy
         self.max_doy = max_doy + pad_days_after
         self.pad_days_after = pad_days_after
@@ -32,6 +32,8 @@ class LifetimeEstimator:
         self.use_tagged_date = use_tagged_date
         if use_tagged_date:
             self.meta = BeeMetaInfo()
+
+        self.p_hatchdates = p_hatchdates
 
     def fit(self, bee_id, bee_detections, num_tune=1000, num_draws=1000, progress=False):
         bee_detections = bee_detections.merge(self.all_doys, how='outer')
@@ -65,7 +67,12 @@ class LifetimeEstimator:
         with model:
             p_emergence = np.ones(len(days)) 
             p_emergence[-self.pad_days_after:] = 0.
+
+            if self.p_hatchdates is not None:
+                p_emergence *= 0.001
+                p_emergence[list(map(int, self.p_hatchdates))] = 1.
             p_emergence /= p_emergence.sum()
+
             if self.use_tagged_date:
                 p_emergence[int(tagged_day)] = self.p_tagged
                 p_emergence /= p_emergence.sum()
