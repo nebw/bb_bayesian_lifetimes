@@ -19,7 +19,10 @@ def get_detection_counts(table_name, connect_str, query_prefix=default_query_pre
             SELECT EXTRACT(DOY FROM timestamp) as doy, bee_id, COUNT(*)
             FROM {}
             GROUP BY doy, bee_id
-            """.format(query_prefix, table_name), conn
-        ) 
+            """.format(
+                query_prefix, table_name
+            ),
+            conn,
+        )
 
     return detections
