@@ -1,10 +1,11 @@
 import datetime
+
 import numpy as np
 import pandas as pd
+import pymc3 as pm
 import scipy
 import scipy.stats
 
-import pymc3 as pm
 from bb_utils.ids import BeesbookID
 from bb_utils.meta import BeeMetaInfo
 

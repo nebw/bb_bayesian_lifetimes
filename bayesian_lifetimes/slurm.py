@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 
+from bb_utils import meta
+from bb_utils.ids import BeesbookID
+
 
 def get_data_for_bee(
     bee_id,
@@ -21,7 +24,7 @@ def get_data_for_bee(
     import os
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        os.environ["THEANO_FLAGS"] = "base_compiledir={}".format(tmpdirname)
+        os.environ["THEANO_FLAGS"] = f"base_compiledir={tmpdirname}"
         from bayesian_lifetimes.estimator import LifetimeEstimator
 
         estimator = LifetimeEstimator(
@@ -47,9 +50,6 @@ def generate_jobs(detections_path, log_detections_threshold=9.5, use_hatchdates=
     detections = pd.read_parquet(detections_path)
 
     if use_hatchdates:
-        from bb_utils.ids import BeesbookID
-        from bb_utils import meta
-
         m = meta.BeeMetaInfo()
         valid_bees = m.hatchdates[np.logical_not(pd.isna(m.hatchdates.hatchdate))]
         bees = list(map(BeesbookID.from_dec_12, valid_bees.dec12))

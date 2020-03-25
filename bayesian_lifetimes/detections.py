@@ -1,7 +1,6 @@
 import pandas as pd
 import psycopg2
 
-
 default_query_prefix = """
 SET geqo_effort to 10;
 SET max_parallel_workers_per_gather TO 16;
